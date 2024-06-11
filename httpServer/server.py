@@ -1,4 +1,3 @@
-# server_with_db.py
 import sqlite3
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
@@ -72,6 +71,27 @@ class MyHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'application/json')
         self.end_headers()
         self.wfile.write(json.dumps({"message": "User deleted"}).encode())
+
+    def do_PUT(self):
+        content_length = int(self.headers['Content-Length'])
+        put_data = json.loads(self.rfile.read(content_length))
+        user_id = put_data['id']
+        name = put_data.get('name')
+        age = put_data.get('age')
+
+        conn = sqlite3.connect('test.db')
+        cursor = conn.cursor()
+        if name:
+            cursor.execute("UPDATE users SET name = ? WHERE id = ?", (name, user_id))
+        if age:
+            cursor.execute("UPDATE users SET age = ? WHERE id = ?", (age, user_id))
+        conn.commit()
+        conn.close()
+
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps({"message": "User updated"}).encode())
 
 if __name__ == "__main__":
     # Initialize the database
